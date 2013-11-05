@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 
 uint64_t bloom_mask_integer(uint64_t i, int len) {
   if(len == 0) {
@@ -66,4 +67,27 @@ bool bloom_lookup(bloom_data *bloom, char *data, int data_len) {
     bloom_lookup_single(bloom, data, data_len, BLOOM_HASH_SEED_2) &&
     bloom_lookup_single(bloom, data, data_len, BLOOM_HASH_SEED_3) &&
     bloom_lookup_single(bloom, data, data_len, BLOOM_HASH_SEED_4);
+}
+
+int bloom_num_bits_set_int(uint32_t i) {
+  i = i - ((i >> 1) & 0x55555555);
+  i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+  return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
+}
+
+uint64_t bloom_num_bits_set(bloom_data *bloom) {
+  uint64_t total = 0;
+  uint64_t i;
+  for(i = 0; i < bloom->data_len; i += 4) {
+    unsigned char val2 = bloom->data[i];
+    uint32_t *val = (uint32_t*)&bloom->data[i];
+    total += bloom_num_bits_set_int(*val);
+  }
+  return total;
+}
+
+double bloom_false_pos_prob(bloom_data *bloom) {
+  double bits_set = (double)bloom_num_bits_set(bloom);
+  double bits_total = (double)bloom->data_len * 8;
+  return pow(bits_set / bits_total, 4);
 }

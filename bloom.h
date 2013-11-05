@@ -20,5 +20,7 @@ bool  bloom_init(bloom_data *bloom, unsigned int len);
 void  bloom_free(bloom_data *bloom);
 void  bloom_insert(bloom_data *bloom, char *data, int data_len);
 bool  bloom_lookup(bloom_data *bloom, char *data, int data_len);
+uint64_t bloom_num_bits_set(bloom_data *bloom);
+double bloom_false_pos_prob(bloom_data *bloom);
 
 #endif
